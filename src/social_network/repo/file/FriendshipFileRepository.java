@@ -38,6 +38,6 @@ public class FriendshipFileRepository extends AbstractFileRepository<Long, Frien
      */
     @Override
     protected String createEntityAsString(Friendship f) {
-        return f.getId1() + ";" + f.getId2() + ";" + f.getDate();
+        return f.getId() + ";" + f.getId1() + ";" + f.getId2() + ";" + f.getDate();
     }
 }

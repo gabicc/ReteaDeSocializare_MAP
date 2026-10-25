@@ -17,7 +17,7 @@ import java.util.*;
 public class Network extends SocialObservable {
     //private List<User> users = new ArrayList<User>();
     //private List<Friendship> friendshipList = new ArrayList<Friendship>();
-    private List<Message> messages = new ArrayList<Message>();
+    //private List<Message> messages = new ArrayList<Message>();
     private ValidatorUser validatorUser = new ValidatorUser(this);
     private ValidatorFriendship validatorFriendship = new ValidatorFriendship(this);
     private ValidatorMessage validatorMessage = new ValidatorMessage(this);
@@ -39,8 +39,8 @@ public class Network extends SocialObservable {
 //        return friendships;
 //    }
 
-    public List<Message> getAllMessages() {
-        return messages;
+    public Iterable<Message> getAllMessages() {
+        return messageFileRepository.findAll();
     }
 
     public void addUser(User u) {
@@ -52,9 +52,17 @@ public class Network extends SocialObservable {
 
     public User removeUser(long id) {
         // This method verifies if a user exists and it deletes it if yes
-        for(User us: userFileRepository.findAll()) {
+        List<User> newUserList = new ArrayList<>();
+        for(User u: userFileRepository.findAll()) {
+            newUserList.add(u);
+        }
+        for(User us: newUserList) {
             if(us.getId().equals(id)) {
+                List<Friendship> newFriendshipList = new ArrayList<>();
                 for(Friendship f: friendshipFileRepository.findAll()) {
+                    newFriendshipList.add(f);
+                }
+                for(Friendship f: newFriendshipList) {
                     if(f.getId1() == id || f.getId2() == id) {
                         friendshipFileRepository.delete(f.getId());
                     }
@@ -70,7 +78,7 @@ public class Network extends SocialObservable {
                 List<Message> newMessage = new ArrayList<>();
                 for(Message m: newMessage) {
                     if(m.getFromId().equals(us.getId()))
-                        messages.remove(m);
+                        messageFileRepository.delete(m.getId());
                 }
 
                 userFileRepository.delete(us.getId());
@@ -98,18 +106,20 @@ public class Network extends SocialObservable {
     }
 
     public void updateUser(User u) {
+        userFileRepository.update(u);
+        notify(new UserUpdateEvent(u));
         // nu mai stiu ce sa pun aici
-        int gasit = 0;
-        for(User us: userFileRepository.findAll()) {
-            if(us.getId().equals(u.getId())){
-                gasit = 1;
-                us.setFirtName(u.getFirstName());
-                us.setLastname(u.getLastname());
-                notify(new UserUpdateEvent(u));
-            }
-        }
-        if(gasit == 0)
-            throw new UserDoesntExistException("User cannot be updated because it's not in the list");
+//        int gasit = 0;
+//        for(User us: userFileRepository.findAll()) {
+//            if(us.getId().equals(u.getId())){
+//                gasit = 1;
+//                us.setFirtName(u.getFirstName());
+//                us.setLastname(u.getLastname());
+//                notify(new UserUpdateEvent(u));
+//            }
+//        }
+//        if(gasit == 0)
+//            throw new UserDoesntExistException("User cannot be updated because it's not in the list");
     }
 
     //getall, crud firendship, message crud
@@ -135,14 +145,13 @@ public class Network extends SocialObservable {
 
     public void addFriendship(long id, long id1, long id2, LocalDateTime date) {
         long max_id = 0;
-        for(Friendship fr: friendshipList) {
+        for(Friendship fr: friendshipFileRepository.findAll()) {
             if (fr.getId() > max_id) {
                 max_id = fr.getId();
             }
         }
         Friendship f = new Friendship( max_id + 1, id1, id2, date);
-        validatorFriendship.validate(f);
-        friendshipList.add(f);
+        friendshipFileRepository.save(f);
 
         notify(new FriendshipAddEvent(f));
     }
@@ -175,14 +184,14 @@ public class Network extends SocialObservable {
 //    }
 
     public void removeFriendship(long id1, long id2) {
-        for(Friendship f: friendshipList) {
+        for(Friendship f: friendshipFileRepository.findAll()) {
             if(f.getId1() == id1 && f.getId2() == id2) {
-                friendshipList.remove(f);
+                friendshipFileRepository.delete(f.getId());
                 notify(new FriendshipRemoveEvent(f));
                 return;
             }
             if(f.getId1() == id2 && f.getId2() == id1) {
-                friendshipList.remove(f);
+                friendshipFileRepository.delete(f.getId());
                 notify(new FriendshipRemoveEvent(f));
                 return;
             }
@@ -191,16 +200,15 @@ public class Network extends SocialObservable {
 
     public void addMessage(Message m) {
         validatorMessage.validate(m);
-        messages.add(m);
+        messageFileRepository.save(m);
         notify(new MessageAddEvent(m));
     }
 
     public void removeMessages(Message messageToRemove) {
         // cam atat
-        boolean removed = messages.removeIf(message ->
-                message.getId().equals(messageToRemove.getId()));
+        Message removed = messageFileRepository.delete(messageToRemove.getId());
 
-        if (!removed) {
+        if (removed == null) {
             throw new IllegalArgumentException(
                     "Message with id " + messageToRemove.getId() + " does not exist.");
         }
@@ -210,7 +218,7 @@ public class Network extends SocialObservable {
 
     public List<Message> userAllSentMessages(long id){
         List<Message> ms = new ArrayList<Message>();
-        for(Message m: messages) {
+        for(Message m: messageFileRepository.findAll()) {
             if(m.getFromId() == id) {
                 ms.add(m);
             }
@@ -220,7 +228,7 @@ public class Network extends SocialObservable {
 
     public List<Message> userAllReceivedMessages(long id){
         List<Message> ms = new ArrayList<Message>();
-        for(Message m: messages) {
+        for(Message m: messageFileRepository.findAll()) {
             if(m.getToId() == id) {
                 ms.add(m);
             }
@@ -230,7 +238,7 @@ public class Network extends SocialObservable {
 
     public Set<Long> userAllFriendsIds(long id) {
         Set<Long> friends = new HashSet<>();
-        for(Friendship f: friendshipList) {
+        for(Friendship f: friendshipFileRepository.findAll()) {
             if(f.getId1() == id) {
                 friends.add(f.getId2());
             }

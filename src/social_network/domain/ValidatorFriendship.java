@@ -24,12 +24,12 @@ public class ValidatorFriendship extends Validator<Friendship> {
         if(entity.getDate() == null || entity.getDate().isAfter(java.time.LocalDateTime.now())) {
             throw new IllegalArgumentException("Friendship date cannot be null or in the future");
         }
-        for(Friendship f: network.getAllFriendshipList()) {
-            if((f.getId1() == entity.getId1() && f.getId2() == entity.getId2()) ||
-                    (f.getId1() == entity.getId2() && f.getId2() == entity.getId1())) {
-                throw new IllegalArgumentException("Friendship between users " + entity.getId1() + " and " + entity.getId2() + " already exists");
-            }
-        }
+//        for(Friendship f: network.getAllFriendshipList()) {
+//            if((f.getId1() == entity.getId1() && f.getId2() == entity.getId2()) ||
+//                    (f.getId1() == entity.getId2() && f.getId2() == entity.getId1())) {
+//                throw new IllegalArgumentException("Friendship between users " + entity.getId1() + " and " + entity.getId2() + " already exists");
+//            }
+//        }
 //        for (long friendshipId : network.getAllFriendships().getOrDefault(entity.getId1(), new HashSet<>())) {
 //            if ((friendshipId == entity.getId1() && friendshipId == entity.getId2()) ||
 //                    (friendshipId == entity.getId2() && friendshipId == entity.getId1())) {

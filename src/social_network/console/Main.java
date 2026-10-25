@@ -4,11 +4,9 @@ import social_network.domain.*;
 import social_network.observable.EventHistory;
 import social_network.observable.UserHistory;
 import social_network.repo.Network;
-import social_network.repo.PersistedNetwork;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 /*
@@ -18,12 +16,12 @@ import java.util.Set;
  * and view user and event history.
  */
 public class Main {
-    private PersistedNetwork network = new PersistedNetwork();
+    private Network network = new Network(); // aici se incarca din csv files
     private UserHistory userHistory = new UserHistory();
     private EventHistory eventHistory = new EventHistory();
 
     public Main() {
-        this.network.loadFromFile("data/users.csv", "data/friendships.csv", "data/messages.csv");
+        //this.network.loadFromFile("data/users.csv", "data/friendships.csv", "data/messages.csv");
         network.addObserver(userHistory);
         network.addObserver(eventHistory);
     }
@@ -125,7 +123,7 @@ public class Main {
                         break;
 
                     case "8":
-                        List<Message> messages = main.network.getAllMessages();
+                        Iterable<Message> messages = main.network.getAllMessages();
                         System.out.println("Messages:");
                         for (Message message : messages) {
                             System.out.println("ID: " + message.getId() + ", From: " + message.getFromId() + ", To: "
@@ -229,7 +227,7 @@ public class Main {
                         }
                         break;
                     case "0":
-                        main.network.saveToFile("data/users.csv", "data/friendships.csv", "data/messages.csv");
+                        //main.network.saveToFile("data/users.csv", "data/friendships.csv", "data/messages.csv");
                         System.exit(0);
                     default:
                         System.out.println("Invalid choice. Please try again.");
@@ -262,3 +260,35 @@ public class Main {
         System.out.println("0. exit");
     }
 }
+
+/*
+users.csv:
+
+
+1;AAAA;Andreiiii
+2;B;Bob
+3;C;Charlie
+4;D;Daniel
+5;E;Eve
+1792953661705;calin;cocan
+1792953707113;gabi;cocan
+7;G;Grace
+8;H;Hannah
+*/
+
+/*
+friendships.csv:
+
+1;1;2;2023-01-01T12:00
+2;1;3;2023-01-02T11:45
+3;2;3;2023-02-02T13:30
+4;4;5;2023-02-03T14:15
+5;7;8;2023-03-06T16:00
+*/
+
+/*
+messages.csv:
+
+1;1;2;hello
+2;1;3;hi
+*/
