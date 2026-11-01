@@ -4,16 +4,26 @@ import social_network.repo.Network;
 /**
  * Validator for Message entities.
  */
-public class ValidatorMessage extends Validator<Message>{
-    public ValidatorMessage(Network network) {
-        super(network);
+public class ValidatorMessage implements Validator<Message>{
+    public ValidatorMessage() {
     }
+
+    private final Validator<Message> validator = ms -> {
+        if(ms.getFromId().equals(ms.getToId())) {
+            throw new IllegalArgumentException("The sender and receiver cannot be the same person");
+        }
+    };
 
     @Override
     public void validate(Message entity) {
-        if(entity.getFromId().equals(entity.getToId())){
-            throw new IllegalArgumentException("The sender and the receiver cannot be the same person!");
-        }
+        validator.validate(entity);
+    }
+
+//    @Override
+//    public void validate(Message entity) {
+//        if(entity.getFromId().equals(entity.getToId())){
+//            throw new IllegalArgumentException("The sender and the receiver cannot be the same person!");
+//        }
 //        if(!network.getAllUsers().contains(entity.getFromId()) || !network.getAllUsers().contains(entity.getToId())){
 //            throw new IllegalArgumentException("The sender or the receiver does not exist in the network!");
 //        }
@@ -32,5 +42,5 @@ public class ValidatorMessage extends Validator<Message>{
 //            }
 //        }
 //        throw new IllegalArgumentException("The sender or the receiver does not exist in the network!");
-    }
+    //}
 }

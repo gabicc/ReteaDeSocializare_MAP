@@ -15,18 +15,25 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 public class Network extends SocialObservable {
-    private final RepositoryFactory repositoryFactory = new RepositoryFactory();
+    private final RepositoryFactory repositoryFactory;
 
-    private ValidatorUser validatorUser = new ValidatorUser(this);
-    private ValidatorFriendship validatorFriendship = new ValidatorFriendship(this);
-    private ValidatorMessage validatorMessage = new ValidatorMessage(this);
+    private ValidatorUser validatorUser = new ValidatorUser();
+    private ValidatorFriendship validatorFriendship = new ValidatorFriendship();
+    private ValidatorMessage validatorMessage = new ValidatorMessage();
     //private UserFileRepository userFileRepository = new UserFileRepository(validatorUser, "data/users.csv");
     //private FriendshipFileRepository friendshipFileRepository = new FriendshipFileRepository(validatorFriendship, "data/friendships.csv");
-    private MessageFileRepository messageFileRepository = new MessageFileRepository(validatorMessage, "data/messages.csv");
-    private final Repository<Long, User> userRepository = repositoryFactory.createUserRepository(validatorUser);
-    private final Repository<Long, Friendship> friendshipRepository = repositoryFactory.createFriendshipRepository(validatorFriendship);
+    //private MessageFileRepository messageFileRepository = new MessageFileRepository(validatorMessage, "data/messages.csv");
+    private Repository<Integer, Message> messageRepository;
+    private final Repository<Long, User> userRepository;
+    private final Repository<Long, Friendship> friendshipRepository;
 
-    public Network() {}
+    public Network(Properties props) {
+
+        this.repositoryFactory = new RepositoryFactory(props);
+        userRepository= repositoryFactory.createUserRepository(validatorUser);
+        friendshipRepository = repositoryFactory.createFriendshipRepository(validatorFriendship);
+        messageRepository = repositoryFactory.createMessageRepository(validatorMessage);
+    }
 
     /*
      * @return the user that was removed
@@ -49,7 +56,7 @@ public class Network extends SocialObservable {
      * @param id the id of the user to be removed
      * */
     public Iterable<Message> getAllMessages() {
-        return messageFileRepository.findAll();
+        return messageRepository.findAll();
     }
 
     public void addUser(User u) {
@@ -91,7 +98,7 @@ public class Network extends SocialObservable {
                 List<Message> newMessage = new ArrayList<>();
                 for(Message m: newMessage) {
                     if(m.getFromId().equals(us.getId()))
-                        messageFileRepository.delete(m.getId());
+                        messageRepository.delete(m.getId());
                 }
 
                 userRepository.delete(us.getId());
@@ -198,13 +205,13 @@ public class Network extends SocialObservable {
 
     public void addMessage(Message m) {
         validatorMessage.validate(m);
-        messageFileRepository.save(m);
+        messageRepository.save(m);
         notify(new MessageAddEvent(m));
     }
 
     public void removeMessages(Message messageToRemove) {
         // cam atat
-        Message removed = messageFileRepository.delete(messageToRemove.getId());
+        Message removed = messageRepository.delete(messageToRemove.getId());
 
         if (removed == null) {
             throw new IllegalArgumentException(
@@ -216,7 +223,7 @@ public class Network extends SocialObservable {
 
     public List<Message> userAllSentMessages(long id){
         List<Message> ms = new ArrayList<Message>();
-        for(Message m: messageFileRepository.findAll()) {
+        for(Message m: messageRepository.findAll()) {
             if(m.getFromId() == id) {
                 ms.add(m);
             }
@@ -226,7 +233,7 @@ public class Network extends SocialObservable {
 
     public List<Message> userAllReceivedMessages(long id){
         List<Message> ms = new ArrayList<Message>();
-        for(Message m: messageFileRepository.findAll()) {
+        for(Message m: messageRepository.findAll()) {
             if(m.getToId() == id) {
                 ms.add(m);
             }

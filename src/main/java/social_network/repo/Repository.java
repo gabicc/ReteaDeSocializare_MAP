@@ -3,6 +3,10 @@ package social_network.repo;
 
 import social_network.domain.Entity;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
+
 /**
  * CRUD operations repository interface
  *
@@ -27,6 +31,25 @@ public interface Repository<ID, E extends Entity<ID>> {
      * @return all entities
      */
     Iterable<E> findAll();
+
+    /*
+     *Repository<ID, E> are metoda default List<E> findAll(Predicate<E> filter). Criteriile
+    de căutare sunt metode statice care întorc Predicate<Utilizator> (de exemplu, în
+    CriteriiUtilizator) și se combină cu and, or, negate, Predicate.not. Nu se adaugă
+    metode de tipul findByLastName în repository.
+     *  */
+    default List<E> findAll(Predicate<E> filter) {
+        if(filter == null) {
+            throw new IllegalArgumentException("Filter-ul nu e bun");
+        }
+        List<E> list = new ArrayList<>();
+        for(E e: findAll()) {
+            if(filter.test(e)) {
+                list.add(e);
+            }
+        }
+        return list;
+    }
 
     /**
      *

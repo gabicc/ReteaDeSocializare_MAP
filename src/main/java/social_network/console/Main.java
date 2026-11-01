@@ -1,12 +1,16 @@
 package social_network.console;
 
 import social_network.domain.*;
+import social_network.exceptions.ApplicationFailureException;
 import social_network.observable.EventHistory;
 import social_network.observable.UserHistory;
 import social_network.repo.Network;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Properties;
 import java.util.Scanner;
 import java.util.Set;
 /*
@@ -16,17 +20,32 @@ import java.util.Set;
  * and view user and event history.
  */
 public class Main {
-    private Network network = new Network(); // aici se incarca din csv files
-    private UserHistory userHistory = new UserHistory();
+    private Network network = null;    private UserHistory userHistory = new UserHistory();
     private EventHistory eventHistory = new EventHistory();
 
-    public Main() {
+    public Main(Properties prop) {
+        network = new Network(prop); // aici se incarca din csv files
+
         //this.network.loadFromFile("data/users.csv", "data/friendships.csv", "data/messages.csv");
         network.addObserver(userHistory);
         network.addObserver(eventHistory);
     }
+
+    public static Properties loadProperties(String filename) {
+        Properties prop = new Properties();
+        try{
+            InputStream is = Main.class.getResourceAsStream(filename);
+            prop.load(is);
+            return prop;
+        } catch(IOException e) {
+            System.err.println("Error loading properties file: " + filename);
+            throw new ApplicationFailureException("Error loading properties file: " + filename);
+        }
+    }
+
     public static void main(String[] args) {
-        Main main = new Main();
+        Properties prop = loadProperties("config.properties");
+        Main main = new Main(prop);
         main.help();
 
         Scanner scanner = new Scanner(System.in);
