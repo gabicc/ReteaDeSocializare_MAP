@@ -6,6 +6,9 @@ import social_network.domain.Entity;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * CRUD operations repository interface
@@ -43,12 +46,21 @@ public interface Repository<ID, E extends Entity<ID>> {
             throw new IllegalArgumentException("Filter-ul nu e bun");
         }
         List<E> list = new ArrayList<>();
-        for(E e: findAll()) {
-            if(filter.test(e)) {
-                list.add(e);
-            }
-        }
+//        for(E e: findAll()) {
+//            if(filter.test(e)) {
+//                list.add(e);
+//            }
+//        }
+
+//        Stream<E> filtered = findAll().stream().filter(e -> {
+//            return filter.test(e);
+//        });
+
+        list = StreamSupport.stream(findAll().spliterator(), false)
+                .filter(filter)
+                .collect(Collectors.toList());
         return list;
+
     }
 
     /**

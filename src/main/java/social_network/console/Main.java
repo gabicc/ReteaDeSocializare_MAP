@@ -34,7 +34,10 @@ public class Main {
     public static Properties loadProperties(String filename) {
         Properties prop = new Properties();
         try{
-            InputStream is = Main.class.getResourceAsStream(filename);
+            InputStream is = Main.class.getClassLoader().getResourceAsStream(filename);
+            if(is == null) {
+                throw new ApplicationFailureException("Properties file not found on the classpath: " + filename);
+            }
             prop.load(is);
             return prop;
         } catch(IOException e) {
@@ -42,7 +45,9 @@ public class Main {
             throw new ApplicationFailureException("Error loading properties file: " + filename);
         }
     }
-
+/*
+* Cerinta 2 nu salveaza in fisier - rezolvat
+* */
     public static void main(String[] args) {
         Properties prop = loadProperties("config.properties");
         Main main = new Main(prop);

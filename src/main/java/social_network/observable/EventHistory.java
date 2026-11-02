@@ -1,5 +1,6 @@
 package social_network.observable;
 
+import com.sun.source.doctree.EscapeTree;
 import social_network.events.*;
 
 import java.time.Instant;
@@ -8,6 +9,9 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+
 /*
     This class represents the history of social events that occur in the social network.
     It extends the SocialObserver class and contains a list of social events that have occurred.
@@ -43,14 +47,25 @@ public class EventHistory extends SocialObserver {
 
         List<String> history = new ArrayList<>();
 
-        for (SocialEvent<?> event : events) {
-            Instant timestamp = event.getTimestamp();
+//        for (SocialEvent<?> event : events) {
+//            Instant timestamp = event.getTimestamp();
+//
+//            if (timestamp.isAfter(start.toInstant(zone.getRules().getOffset(start)))
+//                    && timestamp.isBefore(end.toInstant(zone.getRules().getOffset(end)))) {
+//                history.add(event.toString());
+//            }
+//        }
+        //STREAM
+        Instant startInstant = start.toInstant(zone.getRules().getOffset(start));
+        Instant endInstant = end.toInstant(zone.getRules().getOffset(end));
 
-            if (timestamp.isAfter(start.toInstant(zone.getRules().getOffset(start)))
-                    && timestamp.isBefore(end.toInstant(zone.getRules().getOffset(end)))) {
-                history.add(event.toString());
-            }
-        }
+        Stream<SocialEvent<?>>filter;
+        filter = events.stream().filter(event -> {
+           Instant timestamp = event.getTimestamp();
+
+           return timestamp.isAfter(startInstant) && timestamp.isBefore(endInstant);
+        });
+        filter.forEach(event -> history.add(event.toString()));
 
         return history;
     }

@@ -20,9 +20,10 @@ public class SocialObservable {
     }
 
     public void notify(SocialEvent<?> event) {
-        for (SocialObserver observer : observers) {
-            observer.notify(event);
-        }
+//        for (SocialObserver observer : observers) {
+//            observer.notify(event);
+//        }
+        observers.stream().forEach(observer -> observer.notify(event));
     }
 
 }
