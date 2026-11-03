@@ -11,8 +11,12 @@ import social_network.repo.file.FriendshipFileRepository;
 import social_network.repo.file.MessageFileRepository;
 import social_network.repo.file.UserFileRepository;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class Network extends SocialObservable {
     private final RepositoryFactory repositoryFactory;
@@ -73,20 +77,37 @@ public class Network extends SocialObservable {
     public User removeUser(long id) {
         // This method verifies if a user exists and it deletes it if yes
         List<User> newUserList = new ArrayList<>();
-        for(User u: userRepository.findAll()) {
-            newUserList.add(u);
-        }
+//        for(User u: userRepository.findAll()) {
+//            newUserList.add(u);
+//        }
+
+//        Stream<SocialEvent<?>>filter;
+//        filter = events.stream().filter(event -> {
+//            Instant timestamp = event.getTimestamp();
+//
+//            return timestamp.isAfter(startInstant) && timestamp.isBefore(endInstant);
+//        });
+//        filter.forEach(event -> history.add(event.toString()));
+
+        Stream<User> userStream = StreamSupport.stream(userRepository.findAll().spliterator(), false);
+        userStream.forEach(newUserList::add);
         for(User us: newUserList) {
             if(us.getId().equals(id)) {
                 List<Friendship> newFriendshipList = new ArrayList<>();
-                for(Friendship f: friendshipRepository.findAll()) {
-                    newFriendshipList.add(f);
-                }
-                for(Friendship f: newFriendshipList) {
-                    if(f.getId1() == id || f.getId2() == id) {
-                        friendshipRepository.delete(f.getId());
-                    }
-                }
+//                for(Friendship f: friendshipRepository.findAll()) {
+//                    newFriendshipList.add(f);
+//                }
+                Stream<Friendship> friendshipStream = StreamSupport.stream(friendshipRepository.findAll().spliterator(), false);
+                friendshipStream.forEach(newFriendshipList::add);
+//                for(Friendship f: newFriendshipList) {
+//                    if(f.getId1() == id || f.getId2() == id) {
+//                        friendshipRepository.delete(f.getId());
+//                    }
+//                }
+                Stream<Friendship> filtered = newFriendshipList.stream().filter(fr -> {
+                    return fr.getId1() == id || fr.getId2() == id;
+                });
+                filtered.forEach(f -> friendshipRepository.delete(f.getId()));
 //                List<Friendship> newFriendshipList = new ArrayList<>(friendshipList);
 //                newFriendshipList.addAll(friendshipList);
 //                for(Friendship f: newFriendshipList) {
@@ -96,10 +117,14 @@ public class Network extends SocialObservable {
 //                }
 
                 List<Message> newMessage = new ArrayList<>();
-                for(Message m: newMessage) {
-                    if(m.getFromId().equals(us.getId()))
-                        messageRepository.delete(m.getId());
-                }
+//                for(Message m: newMessage) {
+//                    if(m.getFromId().equals(us.getId()))
+//                        messageRepository.delete(m.getId());
+//                }
+                Stream<Message> filterMessageStream = newMessage.stream().filter(ms -> {
+                    return ms.getFromId().equals(us.getId());
+                });
+                filterMessageStream.forEach(ms -> messageRepository.delete(ms.getId()));
 
                 userRepository.delete(us.getId());
                 notify(new UserRemoveEvent(us));
@@ -173,11 +198,15 @@ public class Network extends SocialObservable {
      * */
     public void addFriendship(long id, long id1, long id2, LocalDateTime date) {
         long max_id = 0;
-        for(Friendship fr: friendshipRepository.findAll()) {
-            if (fr.getId() > max_id) {
-                max_id = fr.getId();
-            }
-        }
+//        for(Friendship fr: friendshipRepository.findAll()) {
+//            if (fr.getId() > max_id) {
+//                max_id = fr.getId();
+//            }
+//        }
+
+        max_id = StreamSupport.stream(friendshipRepository.findAll().spliterator(), false)
+                .map(Friendship::getId).filter(Objects::nonNull)
+                .mapToLong(Long::longValue).max().orElse(0L);
         Friendship f = new Friendship( max_id + 1, id1, id2, date);
         friendshipRepository.save(f);
 
@@ -189,18 +218,23 @@ public class Network extends SocialObservable {
      * @param id the id of the user to be removed
      * */
     public void removeFriendship(long id1, long id2) {
-        for(Friendship f: friendshipRepository.findAll()) {
-            if(f.getId1() == id1 && f.getId2() == id2) {
-                friendshipRepository.delete(f.getId());
-                notify(new FriendshipRemoveEvent(f));
-                return;
-            }
-            if(f.getId1() == id2 && f.getId2() == id1) {
-                friendshipRepository.delete(f.getId());
-                notify(new FriendshipRemoveEvent(f));
-                return;
-            }
-        }
+//        for(Friendship f: friendshipRepository.findAll()) {
+//            if(f.getId1() == id1 && f.getId2() == id2) {
+//                friendshipRepository.delete(f.getId());
+//                notify(new FriendshipRemoveEvent(f));
+//                return;
+//            }
+//            if(f.getId1() == id2 && f.getId2() == id1) {
+//                friendshipRepository.delete(f.getId());
+//                notify(new FriendshipRemoveEvent(f));
+//                return;
+//            }
+//        }
+        Stream<Friendship> filtered = StreamSupport.stream(friendshipRepository.findAll().spliterator(), false)
+                .filter(f -> (f.getId1() == id1 && f.getId2() == id2) || (f.getId1() == id2 && f.getId2() == id1));
+        filtered.forEach(f -> {friendshipRepository.delete(f.getId());
+            notify(new FriendshipRemoveEvent(f));
+        });
     }
 
     public void addMessage(Message m) {
@@ -223,43 +257,57 @@ public class Network extends SocialObservable {
 
     public List<Message> userAllSentMessages(long id){
         List<Message> ms = new ArrayList<Message>();
-        for(Message m: messageRepository.findAll()) {
-            if(m.getFromId() == id) {
-                ms.add(m);
-            }
-        }
+//        for(Message m: messageRepository.findAll()) {
+//            if(m.getFromId() == id) {
+//                ms.add(m);
+//            }
+//        }
+        Stream<Message> filtered = StreamSupport.stream(messageRepository.findAll().spliterator(), false)
+                .filter(m -> m.getFromId() == id);
+        filtered.forEach(m -> ms.add(m));
         return ms;
     }
 
     public List<Message> userAllReceivedMessages(long id){
         List<Message> ms = new ArrayList<Message>();
-        for(Message m: messageRepository.findAll()) {
-            if(m.getToId() == id) {
-                ms.add(m);
-            }
-        }
+//        for(Message m: messageRepository.findAll()) {
+//            if(m.getToId() == id) {
+//                ms.add(m);
+//            }
+//        }
+        Stream<Message> filtered = StreamSupport.stream(messageRepository.findAll().spliterator(), false)
+                .filter(m -> m.getToId() == id);
+        filtered.forEach(m -> ms.add(m));
         return ms;
     }
 
     public Set<Long> userAllFriendsIds(long id) {
         Set<Long> friends = new HashSet<>();
-        for(Friendship f: friendshipRepository.findAll()) {
-            if(f.getId1() == id) {
-                friends.add(f.getId2());
-            }
-            if(f.getId2() == id) {
-                friends.add(f.getId1());
-            }
-        }
+//        for(Friendship f: friendshipRepository.findAll()) {
+//            if(f.getId1() == id) {
+//                friends.add(f.getId2());
+//            }
+//            if(f.getId2() == id) {
+//                friends.add(f.getId1());
+//            }
+//        }
+        Stream<Friendship> filtered1 = StreamSupport.stream(friendshipRepository.findAll().spliterator(), false)
+                .filter(f -> f.getId1() == id);
+        filtered1.forEach(f -> friends.add(f.getId2()));
+        Stream<Friendship> filtered2 = StreamSupport.stream(friendshipRepository.findAll().spliterator(), false)
+                .filter(f -> f.getId2() == id);
+        filtered2.forEach(f -> friends.add(f.getId1()));
         return friends;
     }
 
     public Set<Long> getUserCommunity(long id) {
         //long V = friendships.size();
         Map<Long, Boolean> vizited = new HashMap<Long, Boolean>();
-        for(User u: userRepository.findAll()) {
-            vizited.put(u.getId(), false);
-        }
+//        for(User u: userRepository.findAll()) {
+//            vizited.put(u.getId(), false);
+//        }
+        Stream<User> userStream = StreamSupport.stream(userRepository.findAll().spliterator(), false);
+        userStream.forEach(u -> vizited.put(u.getId(), false));
 
         Set<Long> res = new HashSet<Long>();
 
@@ -270,23 +318,32 @@ public class Network extends SocialObservable {
             res.add(current);
             vizited.put(current, true);
             Set<Long> friends = userAllFriendsIds(current);
-            for(Long i: friends) {
-                if(vizited.get(i) == false) {
-                    vizited.put(i, true);
-                    q.add(i);
-                }
-            }
+//            for(Long i: friends) {
+//                if(vizited.get(i) == false) {
+//                    vizited.put(i, true);
+//                    q.add(i);
+//                }
+//            }
+            Stream<Long> filtered = friends.stream().filter(i -> vizited.get(i) == false);
+            filtered.forEach(i -> vizited.put(i, true));
+            filtered.forEach(i -> q.add(i));
         }
         return res;
     }
 
     private Long firstNotVisited(Map<Long, Boolean> visited) {
-        for(Map.Entry<Long, Boolean> entry: visited.entrySet()) {
-            if(!entry.getValue()) {
-                return entry.getKey();
-            }
-        }
-        return null;
+//        for(Map.Entry<Long, Boolean> entry: visited.entrySet()) {
+//            if(!entry.getValue()) {
+//                return entry.getKey();
+//            }
+//        }
+        return visited.entrySet()
+                .stream()
+                .filter(entry -> !entry.getValue())
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElse(null);
+        //Stream<Map.Entry<Long, Boolean>> filtered = StreamSupport.stream(visited.entrySet().spliterator(), false);
     }
 
     public List<Set<Long>> getAllCommunities() {
@@ -296,28 +353,63 @@ public class Network extends SocialObservable {
         for(User u: userRepository.findAll()) {
             visited.put(u.getId(), false);
         }
+        Stream<User> userStream = StreamSupport.stream(userRepository.findAll().spliterator(), false);
+        userStream.forEach(u -> visited.put(u.getId(), false));
 
-        Queue<Long> q = new LinkedList<>();
-        Long first = firstNotVisited(visited);
-        while(first != null) {
-            Set<Long> res = new HashSet<Long>();
-            q.add(first);
-            while (!q.isEmpty()) {
-                long current = q.poll();
-                res.add(current);
-                visited.put(current, true);
-                Set<Long> friends = userAllFriendsIds(current);
-                for (Long i : friends) {
-                    if (visited.get(i) == false) {
-                        visited.put(i, true);
-                        q.add(i);
-                    }
-                }
-            }
-            rezList.add(res);
-            first = firstNotVisited(visited);
-        }
-        return rezList;
+//        Queue<Long> q = new LinkedList<>();
+//        Long first = firstNotVisited(visited);
+//        while(first != null) {
+//            Set<Long> res = new HashSet<Long>();
+//            q.add(first);
+//            while (!q.isEmpty()) {
+//                long current = q.poll();
+//                res.add(current);
+//                visited.put(current, true);
+//                Set<Long> friends = userAllFriendsIds(current);
+//                for (Long i : friends) {
+//                    if (visited.get(i) == false) {
+//                        visited.put(i, true);
+//                        q.add(i);
+//                    }
+//                }
+//            }
+//            rezList.add(res);
+//            first = firstNotVisited(visited);
+//        }
+//        return rezList;
+
+        List<Set<Long>> result = Stream
+                .generate(() -> firstNotVisited(visited))
+                .takeWhile(Objects::nonNull)
+                .map(first -> {
+                    Set<Long> component = new HashSet<>();
+                    Queue<Long> queue = new ArrayDeque<>();
+
+                    queue.add(first);
+                    visited.put(first, true);
+
+                    Stream.generate(queue::poll)
+                            .takeWhile(Objects::nonNull)
+                            .map(current -> {
+                                component.add(current);
+
+                                userAllFriendsIds(current).stream()
+                                        .filter(friendId ->
+                                                Boolean.FALSE.equals(visited.get(friendId)))
+                                        .forEach(friendId -> {
+                                            visited.put(friendId, true);
+                                            queue.add(friendId);
+                                        });
+
+                                return current;
+                            })
+                            .collect(Collectors.toList());
+
+                    return component;
+                })
+                .toList();
+
+        return result;
     }
 
     public Integer numberOfCommunities() {
@@ -335,6 +427,10 @@ public class Network extends SocialObservable {
                 finn = res;
             }
         }
+//        rezList.stream().filter(res -> res.size() > maxx).findFirst().ifPresent(res -> {
+//            maxx = res.size();
+//            finn = res;
+//        });
         return finn;
     }
 }
