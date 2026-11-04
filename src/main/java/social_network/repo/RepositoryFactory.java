@@ -27,12 +27,12 @@ public class RepositoryFactory {
         if("MEMORY".equals(repoType)) {
             return new InMemoryRepository<>(validator);
         }
-        //TODO fix this
-        else if(repoType.equals("FILE")) {
+
+        else if("FILE".equals(repoType)) {
             return new UserFileRepository(validator, "data/users.csv");
         }
-        //TODO fix this
-        else if(repoType.equals("DATABASE")) {
+
+        else if("DATABASE".equals(repoType)) {
             throw new UnsupportedOperationException("Repo type DATABASE not implemented");
             //return new UserDbRepository();
         }
@@ -44,14 +44,39 @@ public class RepositoryFactory {
 
     //TODO as previeusly in the user part
     public Repository<Long, Friendship> createFriendshipRepository(Validator<Friendship> validator) {
-        if("MEMORY".equals(repoType)){
-
+        if("MEMORY".equals(repoType)) {
+            return new InMemoryRepository<>(validator);
         }
-        return new FriendshipFileRepository(validator, "data/friendships.csv");
+
+        else if("FILE".equals(repoType)) {
+            return new FriendshipFileRepository(validator, "data/friendships.csv");
+        }
+
+        else if("DATABASE".equals(repoType)) {
+            throw new UnsupportedOperationException("Repo type DATABASE not implemented");
+        //return new UserDbRepository();
+        }
+        else{
+            throw new UnsupportedOperationException("This repo type doesn't exist: " + repoType);
+        }
     }
 
     //TODO same as above
     public Repository<Integer, Message> createMessageRepository(Validator<Message> validator) {
-        return new MessageFileRepository(validator, "data/messages.csv");
+        if("MEMORY".equals(repoType)) {
+            return new InMemoryRepository<>(validator);
+        }
+
+        else if("FILE".equals(repoType)) {
+            return new MessageFileRepository(validator, "data/messages.csv");
+        }
+
+        else if("DATABASE".equals(repoType)) {
+            throw new UnsupportedOperationException("Repo type DATABASE not implemented");
+            //return new UserDbRepository();
+        }
+        else{
+            throw new UnsupportedOperationException("This repo type doesn't exist: " + repoType);
+        }
     }
 }

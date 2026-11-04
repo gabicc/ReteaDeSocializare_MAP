@@ -316,3 +316,16 @@ messages.csv:
 1;1;2;hello
 2;1;3;hi
 */
+
+
+/*
+* andThen() -> ValidatorUser
+* findAll() -> userAllFriendsId() -> Network
+* RepositoryFactory
+* AbstractFileRepository
+* Referinta la metoda - UserHistory
+* stream usage -> Network
+* collect - findAll() -> Repository
+* writeToFile - Abstract
+* Optional - removeUser()
+* */

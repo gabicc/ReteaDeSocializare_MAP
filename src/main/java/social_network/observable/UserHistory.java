@@ -33,7 +33,8 @@ public class UserHistory extends SocialObserver{
 //        for(SocialEvent event : events){
 //            history.add(event.toString());
 //        }
-        events.stream().forEach(event -> history.add(event.toString()));
+        //events.stream().forEach(event -> history.add(event.toString()));
+        events.stream().map(SocialEvent::toString).forEach(history::add);
         return history;
     }
 

@@ -14,22 +14,43 @@ public class ValidatorUser implements Validator<User>{
     /**
      * A validator that checks if a User entity is valid.
      */
-    private final Validator<User> validator = user -> {
-        if(user.getFirstName() == null || user.getFirstName().isEmpty()) {
-            throw new IllegalArgumentException("First name cannot be null or empty");
-        }
-        if(user.getLastname() == null || user.getLastname().isEmpty()){
-            throw new IllegalArgumentException("Last name cannot be null or empty");
-        }
-        if(user.getId() == null) {
-            throw new IllegalArgumentException("User ID cannot be null");
-        }
-    };
+//    private final Validator<User> validator = user -> {
+//        if(user.getFirstName() == null || user.getFirstName().isEmpty()) {
+//            throw new IllegalArgumentException("First name cannot be null or empty");
+//        }
+//        if(user.getLastname() == null || user.getLastname().isEmpty()){
+//            throw new IllegalArgumentException("Last name cannot be null or empty");
+//        }
+//        if(user.getId() == null) {
+//            throw new IllegalArgumentException("User ID cannot be null");
+//        }
+//    };
 
-    @Override
-    public void validate(User entity) {
-        validator.validate(entity);
-    }
+
+        private final Validator<User> fieldsValidator = user -> {
+            if (user.getFirstName() == null || user.getFirstName().isEmpty()) {
+                throw new IllegalArgumentException(
+                        "First name cannot be null or empty");
+            }
+            if (user.getLastname() == null || user.getLastname().isEmpty()) {
+                throw new IllegalArgumentException(
+                        "Last name cannot be null or empty");
+            }
+        };
+
+        private final Validator<User> idValidator = user -> {
+            if (user.getId() == null) {
+                throw new IllegalArgumentException("User ID cannot be null");
+            }
+        };
+
+        private final Validator<User> validator =
+                fieldsValidator.andThen(idValidator);
+
+        @Override
+        public void validate(User entity) {
+            validator.validate(entity);
+        }
 
 //    @Override
 //    public void validate(User entity) {

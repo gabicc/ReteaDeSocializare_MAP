@@ -32,6 +32,7 @@ public class EventHistory extends SocialObserver {
         for(SocialEvent<?> event : events){
             history.add(event.toString());
         }
+        Stream<SocialEvent<?>> eventStream = events.stream().filter(e -> history.add(e.toString()));
         return history;
     }
 

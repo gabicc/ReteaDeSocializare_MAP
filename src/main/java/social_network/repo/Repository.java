@@ -35,12 +35,7 @@ public interface Repository<ID, E extends Entity<ID>> {
      */
     Iterable<E> findAll();
 
-    /*
-     *Repository<ID, E> are metoda default List<E> findAll(Predicate<E> filter). Criteriile
-    de căutare sunt metode statice care întorc Predicate<Utilizator> (de exemplu, în
-    CriteriiUtilizator) și se combină cu and, or, negate, Predicate.not. Nu se adaugă
-    metode de tipul findByLastName în repository.
-     *  */
+
     default List<E> findAll(Predicate<E> filter) {
         if(filter == null) {
             throw new IllegalArgumentException("Filter-ul nu e bun");
@@ -58,7 +53,7 @@ public interface Repository<ID, E extends Entity<ID>> {
 
         list = StreamSupport.stream(findAll().spliterator(), false)
                 .filter(filter)
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(ArrayList::new));
         return list;
 
     }
