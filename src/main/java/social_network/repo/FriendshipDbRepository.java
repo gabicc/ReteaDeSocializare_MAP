@@ -43,7 +43,7 @@ public class FriendshipDbRepository implements Repository<Tuple<Long, Long>, Fri
     @Override
     public Iterable<Friendship> findAll() {
         List<Friendship> friendship_list = new ArrayList<>();
-        String sql = "SELECT id1, id2, friends_from FROM friendships ORDER BY id";
+        String sql = "SELECT id1, id2, friends_from FROM friendships ORDER BY id1, id2";
         try{
             PreparedStatement statement = connection.prepareStatement(sql); {
                 ResultSet resSet = statement.executeQuery();
