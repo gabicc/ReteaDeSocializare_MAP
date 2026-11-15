@@ -2,10 +2,7 @@ package social_network.repo;
 
 import social_network.domain.*;
 import social_network.events.*;
-import social_network.exceptions.ExistingFriendshipException;
-import social_network.exceptions.FriendshipDoesntExist;
-import social_network.exceptions.UserDoesntExistException;
-import social_network.exceptions.ExistingUserException;
+import social_network.exceptions.*;
 import social_network.observable.SocialObservable;
 import social_network.repo.file.FriendshipFileRepository;
 import social_network.repo.file.MessageFileRepository;
@@ -29,7 +26,7 @@ public class Network extends SocialObservable {
     //private MessageFileRepository messageFileRepository = new MessageFileRepository(validatorMessage, "data/messages.csv");
     private Repository<Integer, Message> messageRepository;
     private final Repository<Long, User> userRepository;
-    private final Repository<Long, Friendship> friendshipRepository;
+    private final Repository<Tuple<Long, Long>, Friendship> friendshipRepository;
 
     public Network(Properties props) {
 
@@ -101,7 +98,7 @@ public class Network extends SocialObservable {
 //}
 
     public User removeUser(long id) {
-        User user = Optional
+        Optional<User> userOpt = Optional
                 .ofNullable(userRepository.findOne(id))
                 .orElseThrow(() ->
                         new UserDoesntExistException(
@@ -121,10 +118,26 @@ public class Network extends SocialObservable {
                 .map(Message::getId)
                 .forEach(messageRepository::delete);
 
-        userRepository.delete(user.getId());
-        notify(new UserRemoveEvent(user));
+        Optional<User> userToDelete = userOpt.map(u -> {
+            Optional<User> deletedUser = userRepository.delete(u.getId());
+            if(deletedUser.isPresent()) {
+                notify(new UserRemoveEvent(u));
+            }
+            return u;
+        });
+        if(userToDelete.isPresent()) {
+            User u = userToDelete.get();
+            return u;
+        }
+        else{
+            throw new RepoException("Nu am gasit userul ca sa-i dau delete");
+        }
+            //User u = userOpt.get();
 
-        return user;
+
+        //notify(new UserRemoveEvent(user));
+
+        //return user;
     }
 
     /*
@@ -173,18 +186,18 @@ public class Network extends SocialObservable {
      * @return the user that was removed
      * @param id the id of the user to be removed
      * */
-    public void addFriendship(long id, long id1, long id2, LocalDateTime date) {
-        long max_id = 0;
-//        for(Friendship fr: friendshipRepository.findAll()) {
-//            if (fr.getId() > max_id) {
-//                max_id = fr.getId();
-//            }
-//        }
-
-        max_id = StreamSupport.stream(friendshipRepository.findAll().spliterator(), false)
-                .map(Friendship::getId).filter(Objects::nonNull)
-                .mapToLong(Long::longValue).max().orElse(0L);
-        Friendship f = new Friendship( max_id + 1, id1, id2, date);
+    public void addFriendship(long id1, long id2, LocalDateTime date) {
+//        long max_id = 0;
+////        for(Friendship fr: friendshipRepository.findAll()) {
+////            if (fr.getId() > max_id) {
+////                max_id = fr.getId();
+////            }
+////        }
+//
+//        max_id = StreamSupport.stream(friendshipRepository.findAll().spliterator(), false)
+//                .map(Friendship::getId).filter(Objects::nonNull)
+//                .mapToLong(Long::longValue).max().orElse(0L);
+        Friendship f = new Friendship( id1, id2, date);
         friendshipRepository.save(f);
 
         notify(new FriendshipAddEvent(f));
@@ -222,7 +235,7 @@ public class Network extends SocialObservable {
 
     public void removeMessages(Message messageToRemove) {
         // cam atat
-        Message removed = messageRepository.delete(messageToRemove.getId());
+        Optional<Message> removed = messageRepository.delete(messageToRemove.getId());
 
         if (removed == null) {
             throw new IllegalArgumentException(

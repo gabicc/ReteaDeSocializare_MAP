@@ -4,9 +4,11 @@ import social_network.domain.Entity;
 import social_network.domain.Friendship;
 import social_network.domain.Message;
 
+import java.util.Optional;
+
 public class MessageDbRepository implements Repository<Integer, Message> {
     @Override
-    public Message findOne(Integer id) {
+    public Optional<Message> findOne(Integer id) {
         return null;
     }
 
@@ -16,17 +18,17 @@ public class MessageDbRepository implements Repository<Integer, Message> {
     }
 
     @Override
-    public Message save(Message entity) {
+    public Optional<Message> save(Message entity) {
         return null;
     }
 
     @Override
-    public Message delete(Integer id) {
+    public Optional<Message> delete(Integer id) {
         return null;
     }
 
     @Override
-    public Message update(Message entity) {
+    public Optional<Message> update(Message entity) {
         return null;
     }
 }

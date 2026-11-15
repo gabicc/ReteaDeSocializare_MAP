@@ -1,5 +1,6 @@
 package social_network.repo.file;
 import social_network.domain.Friendship;
+import social_network.domain.Tuple;
 import social_network.domain.Validator;
 import social_network.domain.User;
 
@@ -8,7 +9,7 @@ import java.time.LocalDateTime;
 /**
  * Text file repository for users; one user per line, with the format id;firstName;lastName
  */
-public class FriendshipFileRepository extends AbstractFileRepository<Long, Friendship> {
+public class FriendshipFileRepository extends AbstractFileRepository<Tuple<Long, Long>, Friendship> {
 
     /**
      *
@@ -27,7 +28,7 @@ public class FriendshipFileRepository extends AbstractFileRepository<Long, Frien
     @Override
     protected Friendship extractEntity(String line) {
         String[] fields = line.split(";", -1);
-        Friendship f = new Friendship(Long.parseLong(fields[0]), Long.parseLong(fields[1]), Long.parseLong(fields[2]), LocalDateTime.parse(fields[3]));
+        Friendship f = new Friendship(Long.parseLong(fields[1]), Long.parseLong(fields[2]), LocalDateTime.parse(fields[3]));
         return f;
     }
 

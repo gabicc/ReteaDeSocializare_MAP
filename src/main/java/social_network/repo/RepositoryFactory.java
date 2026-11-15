@@ -1,9 +1,6 @@
 package social_network.repo;
 
-import social_network.domain.Friendship;
-import social_network.domain.Message;
-import social_network.domain.User;
-import social_network.domain.Validator;
+import social_network.domain.*;
 import social_network.repo.file.FriendshipFileRepository;
 import social_network.repo.file.MessageFileRepository;
 import social_network.repo.file.UserFileRepository;
@@ -33,8 +30,8 @@ public class RepositoryFactory {
         }
 
         else if("DATABASE".equals(repoType)) {
-            throw new UnsupportedOperationException("Repo type DATABASE not implemented");
-            //return new UserDbRepository();
+            //throw new UnsupportedOperationException("Repo type DATABASE not implemented");
+            return new UserDbRepository(validator);
         }
         else{
             throw new UnsupportedOperationException("This repo type doesn't exist: " + repoType);
@@ -43,7 +40,7 @@ public class RepositoryFactory {
     }
 
     //TODO as previeusly in the user part
-    public Repository<Long, Friendship> createFriendshipRepository(Validator<Friendship> validator) {
+    public Repository<Tuple<Long, Long>, Friendship> createFriendshipRepository(Validator<Friendship> validator) {
         if("MEMORY".equals(repoType)) {
             return new InMemoryRepository<>(validator);
         }
@@ -53,8 +50,8 @@ public class RepositoryFactory {
         }
 
         else if("DATABASE".equals(repoType)) {
-            throw new UnsupportedOperationException("Repo type DATABASE not implemented");
-        //return new UserDbRepository();
+            //throw new UnsupportedOperationException("Repo type DATABASE not implemented");
+            return new FriendshipDbRepository();
         }
         else{
             throw new UnsupportedOperationException("This repo type doesn't exist: " + repoType);
@@ -72,8 +69,8 @@ public class RepositoryFactory {
         }
 
         else if("DATABASE".equals(repoType)) {
-            throw new UnsupportedOperationException("Repo type DATABASE not implemented");
-            //return new UserDbRepository();
+            //throw new UnsupportedOperationException("Repo type DATABASE not implemented");
+            return new MessageDbRepository();
         }
         else{
             throw new UnsupportedOperationException("This repo type doesn't exist: " + repoType);

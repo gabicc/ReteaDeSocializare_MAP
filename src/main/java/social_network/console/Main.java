@@ -71,7 +71,7 @@ public class Main {
                         System.out.print("Enter last name: ");
                         String lastnameToAdd = scanner.nextLine();
                         long id = System.currentTimeMillis();
-                        User newUser = new User(id, lastnameToAdd, firstnameToAdd);
+                        User newUser = new User(lastnameToAdd, firstnameToAdd);
                         main.network.addUser(newUser);
                         System.out.println("User added.");
                         break;
@@ -91,7 +91,7 @@ public class Main {
                         System.out.print("Enter id user: ");
                         String idUser = scanner.nextLine();
                         long idToUpdate = Long.parseLong(idUser);
-                        User u = new User(idToUpdate, newFirstname, newLastname);
+                        User u = new User(newFirstname, newLastname);
                         main.network.updateUser(u);
                         System.out.println("User updated.");
                         break;
@@ -105,13 +105,13 @@ public class Main {
                         System.out.println("Enter date and time of friendship (yyyy-MM-ddTHH:mm): ");
                         String dateString = scanner.nextLine();
                         LocalDateTime date = LocalDateTime.parse(dateString);
-                        long max_id = 0;
-                        for(Friendship fr: main.network.getAllFriendshipList()) {
-                            if (fr.getId() > max_id) {
-                                max_id = fr.getId();
-                            }
-                        }
-                        main.network.addFriendship(max_id, id1, id2, date);
+//                        long max_id = 0;
+//                        for(Friendship fr: main.network.getAllFriendshipList()) {
+//                            if (fr.getId() > max_id) {
+//                                max_id = fr.getId();
+//                            }
+//                        }
+                        main.network.addFriendship(id1, id2, date);
                         System.out.println("Friendship added.");
                         break;
                     case "5":

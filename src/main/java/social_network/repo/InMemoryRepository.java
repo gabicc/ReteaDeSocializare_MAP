@@ -5,6 +5,7 @@ import social_network.domain.Validator;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class InMemoryRepository<ID, E extends Entity<ID>> implements Repository<ID, E> {
 
@@ -17,10 +18,11 @@ public class InMemoryRepository<ID, E extends Entity<ID>> implements Repository<
     }
 
     @Override
-    public E findOne(ID id) {
+    public Optional<E> findOne(ID id) {
         if (id == null)
             throw new IllegalArgumentException("id must be not null");
-        return entities.get(id);
+        //return entities.get(id);
+        return Optional.ofNullable(entities.get(id));
     }
 
     @Override
@@ -29,33 +31,34 @@ public class InMemoryRepository<ID, E extends Entity<ID>> implements Repository<
     }
 
     @Override
-    public E save(E entity) {
+    public Optional<E> save(E entity) {
         if (entity == null)
             throw new IllegalArgumentException("entity must be not null");
         validator.validate(entity);
         if (entities.get(entity.getId()) != null) {
-            return entity;
+            //return entity;
+            return Optional.of(entity);
         }
         entities.put(entity.getId(), entity);
-        return null;
+        return Optional.empty();
     }
 
     @Override
-    public E delete(ID id) {
-        return entities.remove(id);
+    public Optional<E> delete(ID id) {
+        return Optional.ofNullable(entities.remove(id));
     }
 
     @Override
-    public E update(E entity) {
+    public Optional<E> update(E entity) {
 
         if (entity == null)
             throw new IllegalArgumentException("entity must be not null!");
         validator.validate(entity);
 
         if (!entities.containsKey(entity.getId())) {
-            return entity;
+            return Optional.of(entity);
         }
         entities.put(entity.getId(), entity);
-        return null;
+        return Optional.empty();
     }
 }

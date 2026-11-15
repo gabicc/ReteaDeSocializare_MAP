@@ -7,6 +7,7 @@ import social_network.domain.Validator;
 import social_network.repo.InMemoryRepository;
 
 import java.io.*;
+import java.util.Optional;
 
 /**
  * Repository that keeps the entities in memory and in a text file (one entity per line).
@@ -96,9 +97,9 @@ public abstract class AbstractFileRepository<ID, E extends Entity<ID>> extends I
      * @throws IllegalArgumentException                   if the given entity is null.
      */
     @Override
-    public E save(E entity) {
-        E result = super.save(entity);
-        if (result == null)
+    public Optional<E> save(E entity) {
+        Optional<E> result = super.save(entity);
+        if (result.isEmpty())
             writeToFile();
         return result;
     }
@@ -110,9 +111,9 @@ public abstract class AbstractFileRepository<ID, E extends Entity<ID>> extends I
      * @return the removed entity or null if there is no entity with the given id
      */
     @Override
-    public E delete(ID id) {
-        E result = super.delete(id);
-        if (result != null)
+    public Optional<E> delete(ID id) {
+        Optional<E> result = super.delete(id);
+        if (result.isPresent())
             writeToFile();
         return result;
     }
@@ -126,9 +127,9 @@ public abstract class AbstractFileRepository<ID, E extends Entity<ID>> extends I
      * @throws IllegalArgumentException                   if the given entity is null.
      */
     @Override
-    public E update(E entity) {
-        E result = super.update(entity);
-        if (result == null)
+    public Optional<E> update(E entity) {
+        Optional<E> result = super.update(entity);
+        if (result.isEmpty())
             writeToFile();
         return result;
     }

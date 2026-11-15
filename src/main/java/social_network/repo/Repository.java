@@ -5,6 +5,7 @@ import social_network.domain.Entity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -27,7 +28,7 @@ public interface Repository<ID, E extends Entity<ID>> {
      * or null - if there is no entity with the given id
      * @throws IllegalArgumentException if id is null.
      */
-    E findOne(ID id);
+    Optional<E> findOne(ID id);
 
     /**
      *
@@ -65,7 +66,7 @@ public interface Repository<ID, E extends Entity<ID>> {
      * otherwise returns the entity (id already exists)
      * @throws IllegalArgumentException if the given entity is null.     *
      */
-    E save(E entity);
+    Optional<E> save(E entity);
 
     /**
      * removes the entity with the specified id
@@ -74,7 +75,7 @@ public interface Repository<ID, E extends Entity<ID>> {
      * @return the removed entity or null if there is no entity with the given id
      * @throws IllegalArgumentException if the given id is null.
      */
-    E delete(ID id);
+    Optional<E> delete(ID id);
 
     /**
      *
@@ -83,6 +84,6 @@ public interface Repository<ID, E extends Entity<ID>> {
      * otherwise  returns the entity  - (e.g id does not exist).
      * @throws IllegalArgumentException if the given entity is null.
      */
-    E update(E entity);
+    Optional<E> update(E entity);
 }
 

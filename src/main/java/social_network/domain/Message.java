@@ -14,6 +14,13 @@ public class Message extends Entity<Integer> {
         this.message = message;
     }
 
+    public Message(long fromId, long toId, String message) {
+        //super(id);
+        this.fromId = fromId;
+        this.toId = toId;
+        this.message = message;
+    }
+
     public Long getFromId() {
         return fromId;
     }

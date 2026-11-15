@@ -6,8 +6,14 @@ public class User extends Entity<Long> implements Comparable<User>{
     private String lastname;
     private String firstname;
 
-    public User(long id, String nume, String prenume) {
+    public User(Long id, String nume, String prenume) {
         super(id);
+        this.lastname = nume;
+        this.firstname = prenume;
+    }
+
+    public User(String nume, String prenume) {
+        //super(id);
         this.lastname = nume;
         this.firstname = prenume;
     }
