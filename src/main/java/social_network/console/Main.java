@@ -70,7 +70,7 @@ public class Main {
                         String firstnameToAdd = scanner.nextLine();
                         System.out.print("Enter last name: ");
                         String lastnameToAdd = scanner.nextLine();
-                        long id = System.currentTimeMillis();
+                        //long id = System.currentTimeMillis();
                         User newUser = new User(lastnameToAdd, firstnameToAdd);
                         main.network.addUser(newUser);
                         System.out.println("User added.");
@@ -91,7 +91,7 @@ public class Main {
                         System.out.print("Enter id user: ");
                         String idUser = scanner.nextLine();
                         long idToUpdate = Long.parseLong(idUser);
-                        User u = new User(newFirstname, newLastname);
+                        User u = new User(idToUpdate, newFirstname, newLastname);
                         main.network.updateUser(u);
                         System.out.println("User updated.");
                         break;

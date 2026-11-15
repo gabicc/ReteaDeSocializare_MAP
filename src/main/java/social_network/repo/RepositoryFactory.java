@@ -31,7 +31,7 @@ public class RepositoryFactory {
 
         else if("DATABASE".equals(repoType)) {
             //throw new UnsupportedOperationException("Repo type DATABASE not implemented");
-            return new UserDbRepository(validator);
+            return new UserDbRepository(validator, props);
         }
         else{
             throw new UnsupportedOperationException("This repo type doesn't exist: " + repoType);
@@ -51,7 +51,7 @@ public class RepositoryFactory {
 
         else if("DATABASE".equals(repoType)) {
             //throw new UnsupportedOperationException("Repo type DATABASE not implemented");
-            return new FriendshipDbRepository();
+            return new FriendshipDbRepository(validator, props);
         }
         else{
             throw new UnsupportedOperationException("This repo type doesn't exist: " + repoType);

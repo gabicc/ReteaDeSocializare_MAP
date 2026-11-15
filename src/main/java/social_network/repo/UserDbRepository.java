@@ -9,22 +9,29 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
 
 public class UserDbRepository implements Repository<Long, User> {
     private Validator<User> validator;
     private Connection connection;
+    private Properties props;
 
-    public UserDbRepository(Validator<User> validator) {
+
+    public UserDbRepository(Validator<User> validator, Properties props) {
         this.validator = validator;
+        this.props = props;
         try {
             connection = DriverManager.getConnection(
-                    "jdbc:postgresql://localhost:5432/socialnetwork",
-                    "postgres",
-                    "postgres"
+//                    "jdbc:postgresql://localhost:5432/socialnetwork",
+                    props.getProperty("db.url"),
+                    props.getProperty("db.user"),
+                    props.getProperty("db.password")
+//                    "postgres",
+//                    "postgres"
             );
         } catch (SQLException e) {
-            e.printStackTrace();
-            throw new ApplicationFailureException("Unable to connect to database");
+            //e.printStackTrace();
+            throw new ApplicationFailureException("Unable to connect to database", e);
         }
     }
 
@@ -48,15 +55,13 @@ public class UserDbRepository implements Repository<Long, User> {
                 return resSet.next() ? Optional.of(fromRow(resSet)) : Optional.empty();
             }
         } catch(SQLException e) {
-            e.printStackTrace();
-            throw new RepoException("Eroare la cautarea userului");
+            throw new RepoException("Eroare la cautarea userului", e.getCause());
         }
     }
 
 
 
     @Override
-
     public Iterable<User> findAll() {
         List<User> users =new ArrayList<>();
         String sql = "SELECT id, first_name, last_name FROM users ORDER BY id";
@@ -69,8 +74,7 @@ public class UserDbRepository implements Repository<Long, User> {
                 return users;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
-            throw new RepoException("Eroare la citirea userilor (findAll)");
+            throw new RepoException("Eroare la citirea userilor (findAll)", e.getCause());
         }
         //return null;
     }
@@ -81,9 +85,9 @@ public class UserDbRepository implements Repository<Long, User> {
             throw new IllegalArgumentException("Entity nu poate fi null");
         }
         validator.validate(entity);
-        if(entity.getId() == null) {
-            throw new IllegalArgumentException("Id nu poate fi null");
-        }
+//        if(entity.getId() == null) {
+//            throw new IllegalArgumentException("Id nu poate fi null");
+//        }
         String sql = "INSERT INTO users(first_name, last_name) VALUES (?, ?)";
         try{
             PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -94,7 +98,7 @@ public class UserDbRepository implements Repository<Long, User> {
 
             ResultSet resSet = statement.getGeneratedKeys();
             if(!resSet.next()) {
-                throw new RepoException("Nu s-a generat un id");
+                throw new IllegalArgumentException("Nu s-a generat id");
             }
             else{
                 entity.setId(resSet.getLong(1));
@@ -102,8 +106,7 @@ public class UserDbRepository implements Repository<Long, User> {
             return Optional.empty();
 
         } catch (SQLException e) {
-            e.printStackTrace();
-            throw new RepoException("Eroare la save user");
+            throw new RepoException("Eroare la save user", e.getCause());
         }
     }
 
@@ -119,8 +122,7 @@ public class UserDbRepository implements Repository<Long, User> {
             ResultSet resSet = statement.executeQuery();
             return resSet.next() ? Optional.of(fromRow(resSet)) : Optional.empty();
         } catch (SQLException e) {
-            e.printStackTrace();
-            throw new RepoException("Eroare la delete user");
+            throw new RepoException("Eroare la delete user", e.getCause());
         }
     }
 
@@ -128,7 +130,7 @@ public class UserDbRepository implements Repository<Long, User> {
     /**
      *
      * @param entity entity must not be null
-     * @return Optional<User>
+     * @return optional of the user
      */
     @Override
     public Optional<User> update(User entity) {
@@ -147,8 +149,7 @@ public class UserDbRepository implements Repository<Long, User> {
             statement.setLong(3, entity.getId());
             return statement.executeUpdate() == 0 ? Optional.of(entity) : Optional.empty();
         } catch (SQLException e) {
-            e.printStackTrace();
-            throw new RepoException("Eroare la update user");
+            throw new RepoException("Eroare la update user", e.getCause());
         }
     }
 }

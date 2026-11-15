@@ -9,26 +9,31 @@ import java.util.Optional;
 public class MessageDbRepository implements Repository<Integer, Message> {
     @Override
     public Optional<Message> findOne(Integer id) {
-        return null;
+
+        throw new UnsupportedOperationException("Unimplemented MessageDbRepository");
     }
 
     @Override
     public Iterable<Message> findAll() {
-        return null;
+
+        throw new UnsupportedOperationException("Unimplemented MessageDbRepository");
     }
 
     @Override
     public Optional<Message> save(Message entity) {
-        return null;
+
+        throw new UnsupportedOperationException("Unimplemented MessageDbRepository");
     }
 
     @Override
     public Optional<Message> delete(Integer id) {
-        return null;
+
+        throw new UnsupportedOperationException("Unimplemented MessageDbRepository");
     }
 
     @Override
     public Optional<Message> update(Message entity) {
-        return null;
+
+        throw new UnsupportedOperationException("Unimplemented MessageDbRepository");
     }
 }

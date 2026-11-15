@@ -111,12 +111,12 @@ public class Network extends SocialObservable {
                 .stream()
                 .map(Friendship::getId)
                 .forEach(friendshipRepository::delete);
-
-        messageRepository.findAll(
-                        message -> Objects.equals(message.getFromId(), id))
-                .stream()
-                .map(Message::getId)
-                .forEach(messageRepository::delete);
+//
+//        messageRepository.findAll(
+//                        message -> Objects.equals(message.getFromId(), id))
+//                .stream()
+//                .map(Message::getId)
+//                .forEach(messageRepository::delete);
 
         Optional<User> userToDelete = userOpt.map(u -> {
             Optional<User> deletedUser = userRepository.delete(u.getId());
@@ -130,7 +130,7 @@ public class Network extends SocialObservable {
             return u;
         }
         else{
-            throw new RepoException("Nu am gasit userul ca sa-i dau delete");
+            throw new IllegalArgumentException("Nu am gasit userul ca sa-i dau delete");
         }
             //User u = userOpt.get();
 

@@ -3,6 +3,7 @@ package social_network.repo;
 import social_network.domain.Friendship;
 import social_network.domain.Tuple;
 import social_network.domain.Validator;
+import social_network.exceptions.ApplicationFailureException;
 import social_network.exceptions.RepoException;
 
 import java.sql.*;
@@ -10,10 +11,30 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
 
 public class FriendshipDbRepository implements Repository<Tuple<Long, Long>, Friendship> {
     private Validator<Friendship> validator;
     private Connection connection;
+    private Properties props;
+
+    public FriendshipDbRepository(Validator<Friendship> validator, Properties props) {
+        this.validator = validator;
+        this.props = props;
+        try {
+            connection = DriverManager.getConnection(
+//                    "jdbc:postgresql://localhost:5432/socialnetwork",
+                    props.getProperty("db.url"),
+                    props.getProperty("db.user"),
+                    props.getProperty("db.password")
+//                    "postgres",
+//                    "postgres"
+            );
+        } catch (SQLException e) {
+            //e.printStackTrace();
+            throw new ApplicationFailureException("Unable to connect to database", e);
+        }
+    }
 
     public Friendship fromRow(ResultSet row) throws SQLException {
         Friendship fr = new Friendship(row.getLong("id1"), row.getLong("id2")
@@ -35,8 +56,7 @@ public class FriendshipDbRepository implements Repository<Tuple<Long, Long>, Fri
               return resSet.next() ? Optional.of(fromRow(resSet)) : Optional.empty();
             }
         } catch (SQLException e) {
-            e.printStackTrace();
-            throw new RepoException("Eroare la findOne la friendships");
+            throw new RepoException("Eroare la findOne la friendships", e.getCause());
         }
     }
 
@@ -53,8 +73,7 @@ public class FriendshipDbRepository implements Repository<Tuple<Long, Long>, Fri
                 return friendship_list;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
-            throw new RepoException("Eroare la findAll la frriendships");
+            throw new RepoException("Eroare la findAll la frriendships", e.getCause());
         }
     }
 
@@ -83,18 +102,12 @@ public class FriendshipDbRepository implements Repository<Tuple<Long, Long>, Fri
 
             statement.executeUpdate();
 
-            ResultSet resSet = statement.getGeneratedKeys();
-            if(!resSet.next()) {
-                throw new RepoException("Nu s-a generat un id");
-            }
-            else{
-                entity.setId(new Tuple<>(resSet.getLong(1), resSet.getLong(2)));
-            }
+            //entity.setId(new Tuple<>(entity.getId1(), entity.getId2()));
+
             return Optional.empty();
 
         } catch (SQLException e) {
-            e.printStackTrace();
-            throw new RepoException("Eroare la save");
+            throw new RepoException("Eroare la save", e);
         }
     }
 
@@ -112,8 +125,7 @@ public class FriendshipDbRepository implements Repository<Tuple<Long, Long>, Fri
             return resSet.next() ? Optional.of(fromRow(resSet)) : Optional.empty();
 
         } catch (SQLException e) {
-            e.printStackTrace();
-            throw new RepoException("Eroare la delete friendship");
+            throw new RepoException("Eroare la delete friendship", e.getCause());
         }
     }
 
@@ -140,8 +152,7 @@ public class FriendshipDbRepository implements Repository<Tuple<Long, Long>, Fri
 
             return statement.executeUpdate() == 0 ? Optional.of(entity) : Optional.empty();
         } catch (SQLException e) {
-            e.printStackTrace();
-            throw new RepoException("Eroare la update friendship");
+            throw new RepoException("Eroare la update friendship", e.getCause());
         }
     }
 }

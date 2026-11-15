@@ -28,7 +28,7 @@ public class FriendshipFileRepository extends AbstractFileRepository<Tuple<Long,
     @Override
     protected Friendship extractEntity(String line) {
         String[] fields = line.split(";", -1);
-        Friendship f = new Friendship(Long.parseLong(fields[1]), Long.parseLong(fields[2]), LocalDateTime.parse(fields[3]));
+        Friendship f = new Friendship(Long.parseLong(fields[0]), Long.parseLong(fields[1]), LocalDateTime.parse(fields[2]));
         return f;
     }
 
@@ -39,6 +39,6 @@ public class FriendshipFileRepository extends AbstractFileRepository<Tuple<Long,
      */
     @Override
     protected String createEntityAsString(Friendship f) {
-        return f.getId() + ";" + f.getId1() + ";" + f.getId2() + ";" + f.getDate();
+        return f.getId1() + ";" + f.getId2() + ";" + f.getDate();
     }
 }
