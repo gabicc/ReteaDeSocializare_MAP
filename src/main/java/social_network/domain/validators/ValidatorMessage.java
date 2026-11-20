@@ -1,6 +1,7 @@
-package social_network.domain;
+package social_network.domain.validators;
 
-import social_network.repo.Network;
+import social_network.domain.Message;
+
 /**
  * Validator for Message entities.
  */

@@ -2,11 +2,7 @@ package social_network.repo;
 
 import social_network.domain.Entity;
 import social_network.domain.User;
-import social_network.domain.Validator;
-import social_network.repo.file.UserFileRepository;
-
-import java.util.Map;
-import java.util.function.Supplier;
+import social_network.domain.validators.Validator;
 
 public class UserRepository<ID> extends Entity<ID>{
     Validator<User> validator;

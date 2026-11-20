@@ -1,19 +1,19 @@
 package social_network.repo;
 
 import social_network.domain.User;
-import social_network.domain.Validator;
+import social_network.domain.validators.Validator;
 import social_network.exceptions.ApplicationFailureException;
 import social_network.exceptions.RepoException;
+import social_network.repo.util.Page;
+import social_network.repo.util.Pageable;
+import social_network.repo.util.Sort;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 
-public class UserDbRepository implements Repository<Long, User> {
+public class UserDbRepository implements PagingRepository<Long, User> {
     private Validator<User> validator;
-    private Connection connection;
+    private final Connection connection;
     private Properties props;
 
 
@@ -150,6 +150,88 @@ public class UserDbRepository implements Repository<Long, User> {
             return statement.executeUpdate() == 0 ? Optional.of(entity) : Optional.empty();
         } catch (SQLException e) {
             throw new RepoException("Eroare la update user", e.getCause());
+        }
+    }
+
+    private int count(Connection connection) throws SQLException {
+        String sql = "SELECT COUNT(*) AS count FROM users";
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet result = statement.executeQuery()) {
+            int totalNumberOfUsers = 0;
+            if (result.next()) {
+                totalNumberOfUsers = result.getInt("count");
+            }
+            return totalNumberOfUsers;
+        }
+    }
+
+    public List<User> findAllOnPage(Connection connection, Pageable pageable) throws SQLException {
+        List<User> usersOnPage = new ArrayList<>();
+        String sql = "SELECT id, first_name, last_name FROM users ORDER BY id LIMIT ? OFFSET ?";
+        PreparedStatement statement = connection.prepareStatement(sql);
+        statement.setInt(1, pageable.getPageSize());
+        statement.setInt(2, pageable.getPageNumber() * pageable.getPageSize());
+        ResultSet resSet = statement.executeQuery();
+
+        while (resSet.next()) {
+            usersOnPage.add(fromRow(resSet));
+        }
+
+        return usersOnPage;
+    }
+
+    @Override
+    public Page<User> findAllOnPage(Pageable pageable) {
+        try  {//(connection) {
+            int totalNumberOfUsers = count(connection);
+            List<User> usersOnPage;
+            if(totalNumberOfUsers > 0) {
+                usersOnPage =findAllOnPage(connection, (Pageable) pageable);
+            }
+            else{
+                usersOnPage = new ArrayList<>();
+            }
+            return new Page<>(usersOnPage, totalNumberOfUsers);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // ORDER BY cannot use "?" parameters, so the column name is taken only from this whitelist
+    // (never concatenate user input directly into SQL -> SQL injection).
+    private static final Map<String, String> SORT_COLUMNS = Map.of(
+            "first_name", "prenume",
+            "last_name", "nume"
+    );
+
+    @Override
+    public Page<User> findAllOnPage(Pageable pageable, Sort sort) {
+        String field = sort.field() == null ? "" : sort.field().trim().toLowerCase();
+        String column =SORT_COLUMNS.get(field);
+        if(column == null) {
+            throw new IllegalArgumentException("Cannot sort by: " + sort.field() + ". Allowed: " + SORT_COLUMNS.keySet());
+        }
+
+        String sql = "SELECT id, first_name, last_name FROM users ORDER BY " +
+                column + (sort.ascending() ? " ASC " : " DESC ") + "LIMIT ? OFFSET ?";
+        try(connection) {
+            int totalNumberOfUsers = count(connection);
+            List<User> usersOnPage = new ArrayList<>();
+            try(PreparedStatement statement = connection.prepareStatement(sql)){
+                statement.setInt(1, pageable.getPageSize());
+                statement.setInt(2, pageable.getPageNumber() * pageable.getPageSize());
+                try(ResultSet resSet = statement.executeQuery()) {
+                    while (resSet.next()) {
+                        User u = new User(resSet.getString("first_name"),
+                                resSet.getString("last_name"));
+                        u.setId(resSet.getLong("id"));
+                        usersOnPage.add(u);
+                    }
+                }
+            }
+            return new Page<>(usersOnPage, totalNumberOfUsers);
+        } catch (SQLException e) {
+            throw new RepoException("Sorted pagination failed", e);
         }
     }
 }

@@ -1,7 +1,7 @@
-package social_network.domain;
+package social_network.domain.validators;
 
-import social_network.exceptions.ExistingUserException;
-import social_network.repo.Network;
+import social_network.domain.User;
+
 /*
     ValidatorUser class is responsible for validating User entities before they are added to the Network.
     It checks if the first name and last name are not null or empty, and if a user with the same ID already exists in the network.

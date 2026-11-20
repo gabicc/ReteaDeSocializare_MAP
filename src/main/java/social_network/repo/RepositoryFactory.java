@@ -1,6 +1,7 @@
 package social_network.repo;
 
 import social_network.domain.*;
+import social_network.domain.validators.Validator;
 import social_network.repo.file.FriendshipFileRepository;
 import social_network.repo.file.MessageFileRepository;
 import social_network.repo.file.UserFileRepository;

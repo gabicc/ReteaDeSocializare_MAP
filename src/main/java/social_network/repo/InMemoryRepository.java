@@ -1,7 +1,7 @@
 package social_network.repo;
 
 import social_network.domain.Entity;
-import social_network.domain.Validator;
+import social_network.domain.validators.Validator;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,9 +1,6 @@
 package social_network.repo.file;
-import social_network.domain.Friendship;
 import social_network.domain.Message;
-import social_network.domain.Validator;
-
-import java.time.LocalDateTime;
+import social_network.domain.validators.Validator;
 
 /**
  * Text file repository for users; one user per line, with the format id;firstName;lastName

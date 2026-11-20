@@ -1,8 +1,7 @@
 package social_network.repo.file;
 import social_network.domain.Friendship;
 import social_network.domain.Tuple;
-import social_network.domain.Validator;
-import social_network.domain.User;
+import social_network.domain.validators.Validator;
 
 import java.time.LocalDateTime;
 

@@ -1,10 +1,14 @@
 package social_network.console;
 
 import social_network.domain.*;
+import social_network.domain.validators.ValidatorFriendship;
+import social_network.domain.validators.ValidatorUser;
 import social_network.exceptions.ApplicationFailureException;
 import social_network.observable.EventHistory;
 import social_network.observable.UserHistory;
-import social_network.repo.Network;
+import social_network.repo.*;
+import social_network.repo.util.Page;
+import social_network.repo.util.Pageable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,6 +49,203 @@ public class Main {
             throw new ApplicationFailureException("Error loading properties file: " + filename);
         }
     }
+
+    static Repository<Long, User> createRepository() throws IOException {
+        Properties props = new Properties();
+        try (InputStream in = Main.class.getResourceAsStream("/config.properties")) {
+            props.load(in);
+        }
+        return new RepositoryFactory(props).createUserRepository(new ValidatorUser());
+    }
+
+    static Repository<Tuple<Long, Long>, Friendship> createRepositoryFriends() throws IOException {
+        Properties props = new Properties();
+        try (InputStream in = Main.class.getResourceAsStream("/config.properties")) {
+            props.load(in);
+        }
+        return new RepositoryFactory(props).createFriendshipRepository(new ValidatorFriendship());
+    }
+
+    static void pagination(Repository<Long, User> repo) {
+        System.out.println("==PAGINATION==");
+        if(!(repo instanceof PagingRepository<Long, User> pagingRepo)) {
+            System.out.println("Pagination is not supported by this repository");
+            return;
+        }
+        int pageSize = 3;
+        Page<User> page = pagingRepo.findAllOnPage(new Pageable(0, pageSize));
+        int totalPages = (page.getTotalNumberOfElements() + pageSize - 1) / pageSize;
+        for(int pageNo = 0; pageNo < totalPages; pageNo++) {
+            if(pageNo > 0) {
+                page =pagingRepo.findAllOnPage(new Pageable(pageNo, pageSize));
+            }
+            System.out.println("Page " + (pageNo + 1) + "/" + totalPages + ":");
+            page.getElementsOnPage().forEach(u -> System.out.println("  " + u));
+        }
+    }
+
+    static void paginationFr(Long userId, Repository<Tuple<Long, Long>, Friendship> repoFr) {
+        System.out.println("===PAGINATION=");
+        if(!(repoFr instanceof FriendshipDbRepository friendshipDbRepository)) {
+            System.out.println("Pagination is not supported by this repository");
+            return;
+        }
+        int pageSize = 3;
+        Page<User> page = friendshipDbRepository.findFriendsOnPage(userId, new Pageable(0, pageSize));
+        //Page<Friendship> page = pagingRepository.findAllOnPage(new Pageable(0, pageSize));
+        int totalPages = (page.getTotalNumberOfElements() + pageSize - 1) / pageSize;
+        for(int pageNo = 0; pageNo < totalPages; pageNo++) {
+            if(pageNo > 0) {
+                page = friendshipDbRepository.findFriendsOnPage(userId, new Pageable(pageNo, pageSize));
+            }
+            System.out.println("Page " + (pageNo + 1) + "/" + totalPages + ":");
+            page.getElementsOnPage().forEach(fr -> System.out.println("  " + fr));
+        }
+    }
+
+    static void interactivePaginationUsers(
+            Repository<Long, User> repo,
+            Scanner scanner
+    ) {
+        if (!(repo instanceof PagingRepository<Long, User> pagingRepo)) {
+            System.out.println("Pagination is not supported by this repository");
+            return;
+        }
+
+        int pageSize = 0;
+        while (pageSize <= 0) {
+            System.out.print("Users per page: ");
+            try {
+                pageSize = Integer.parseInt(scanner.nextLine().trim());
+                if (pageSize <= 0) {
+                    System.out.println("Must be a positive number");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Not a number");
+            }
+        }
+
+        int pageNumber = 0;
+
+        while (true) {
+            Page<User> page = pagingRepo.findAllOnPage(
+                    new Pageable(pageNumber, pageSize)
+            );
+
+            int totalPages = page.getTotalNumberOfElements() == 0
+                    ? 0
+                    : (page.getTotalNumberOfElements() + pageSize - 1) / pageSize;
+
+            if (totalPages == 0) {
+                System.out.println("No users found.");
+            } else {
+                System.out.println("Page " + (pageNumber + 1) + "/" + totalPages + ":");
+
+                if (!page.getElementsOnPage().iterator().hasNext()) {
+                    System.out.println("  No users on this page.");
+                } else {
+                    page.getElementsOnPage().forEach(
+                            user -> System.out.println("  " + user)
+                    );
+                }
+            }
+
+            System.out.print("[n]ext, [p]revious, [q]uit: ");
+
+            switch (scanner.nextLine().trim().toLowerCase()) {
+                case "n" -> {
+                    if (totalPages == 0) {
+                        System.out.println("There are no pages.");
+                    } else if (pageNumber >= totalPages - 1) {
+                        System.out.println("Nu mai exista pagini in fata!");
+                    } else {
+                        pageNumber++;
+                    }
+                }
+                case "p" -> {
+                    if (pageNumber == 0) {
+                        System.out.println("Nu mai exista pagini in spate!");
+                    } else {
+                        pageNumber--;
+                    }
+                }
+                case "q" -> {
+                    return;
+                }
+                default -> System.out.println("Unknown command");
+            }
+        }
+    }
+
+    static void interactivePaginationFriends(
+            FriendshipDbRepository repo,
+            Scanner scanner,
+            Long userId
+    ) {
+        int pageSize = 0;
+        while (pageSize <= 0) {
+            System.out.print("Friends per page: ");
+            try {
+                pageSize = Integer.parseInt(scanner.nextLine().trim());
+                if (pageSize <= 0) {
+                    System.out.println("Must be a positive number");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Not a number");
+            }
+        }
+
+        int pageNumber = 0;
+
+        while (true) {
+            Page<User> page =
+                    repo.findFriendsOnPage(userId, new Pageable(pageNumber, pageSize));
+
+            int totalPages = page.getTotalNumberOfElements() == 0
+                    ? 0
+                    : (page.getTotalNumberOfElements() + pageSize - 1) / pageSize;
+
+            if (totalPages == 0) {
+                System.out.println("No friends found.");
+            } else {
+                System.out.println("Page " + (pageNumber + 1) + "/" + totalPages + ":");
+
+                if (!page.getElementsOnPage().iterator().hasNext()) {
+                    System.out.println("  No friends on this page.");
+                } else {
+                    page.getElementsOnPage().forEach(
+                            user -> System.out.println("  " + user)
+                    );
+                }
+            }
+
+            System.out.print("[n]ext, [p]revious, [q]uit: ");
+
+            switch (scanner.nextLine().trim().toLowerCase()) {
+                case "n" -> {
+                    if (totalPages == 0) {
+                        System.out.println("There are no pages.");
+                    } else if (pageNumber >= totalPages - 1) {
+                        System.out.println("Nu mai exista pagini in fata!");
+                    } else {
+                        pageNumber++;
+                    }
+                }
+                case "p" -> {
+                    if (pageNumber == 0) {
+                        System.out.println("Nu mai exista pagini in spate!");
+                    } else {
+                        pageNumber--;
+                    }
+                }
+                case "q" -> {
+                    return;
+                }
+                default -> System.out.println("Unknown command");
+            }
+        }
+    }
+
 /*
 * Cerinta 2 nu salveaza in fisier - rezolvat
 * */
@@ -250,6 +451,39 @@ public class Main {
                             System.out.println(history);
                         }
                         break;
+                    case "18":
+                        System.out.println("==USERS PAGING==");
+                        Repository<Long, User> repo = createRepository();
+                        pagination(repo);
+                        break;
+                    case "19":
+                        //Scanner scanner1 = new Scanner(System.in);
+
+                        System.out.println("User id: ");
+                        String userIdString = scanner.nextLine();
+                        Long userId = userIdString.equals("") ? null : Long.parseLong(userIdString);
+
+                        System.out.println("==FRIENDS OF USER PAGING==");
+                        Repository<Tuple<Long, Long>, Friendship> repoFr = createRepositoryFriends();
+                        paginationFr(userId, repoFr);
+                        break;
+                    case "20":
+                        System.out.println("==INTERACTIVE PAGING FOR USERS==");
+                        Repository<Long, User> repoInteractive = createRepository();
+                        //Repository<Long, User> repo = createRepository();
+                        //TODO - de vazut functia interactivePagingUsers()
+                        interactivePaginationUsers(repoInteractive, scanner);
+                        break;
+                    case "21":
+                        System.out.println("==INTERACTIVE PAGING FOR FRIENDSHIPS==");
+
+                        System.out.println("User id: ");
+                        String userIdString2 = scanner.nextLine();
+                        Long userId2 = userIdString2.equals("") ? null : Long.parseLong(userIdString2);
+                        Repository<Tuple<Long, Long>, Friendship> repoFrInteractive = createRepositoryFriends();
+                        //TODO - de vazut functia interactivePagingFriends()
+                        interactivePaginationFriends(repoFrInteractive, scanner, userId2);
+                        break;
                     case "0":
                         //main.network.saveToFile("data/users.csv", "data/friendships.csv", "data/messages.csv");
                         System.exit(0);
@@ -281,6 +515,10 @@ public class Main {
         System.out.println("15. cea mai sociabila comunitate");
         System.out.println("16. user history intre doua date");
         System.out.println("17. event history intre doua date");
+        System.out.println("18. Lista utilizatori pe pagini");
+        System.out.println("19. Lista prietenilor unui utilizator pe pagini");
+        System.out.println("20. Interactive Paging pentru utilizatori");
+        System.out.println("21. Interactive Paging pentru Friendships");
         System.out.println("0. exit");
     }
 }

@@ -2,20 +2,21 @@ package social_network.repo;
 
 import social_network.domain.Friendship;
 import social_network.domain.Tuple;
-import social_network.domain.Validator;
+import social_network.domain.User;
+import social_network.domain.validators.Validator;
 import social_network.exceptions.ApplicationFailureException;
 import social_network.exceptions.RepoException;
+import social_network.repo.util.Page;
+import social_network.repo.util.Pageable;
+import social_network.repo.util.Sort;
 
 import java.sql.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 
-public class FriendshipDbRepository implements Repository<Tuple<Long, Long>, Friendship> {
+public class FriendshipDbRepository implements Repository<Tuple<Long, Long>, Friendship> {//PagingRepository<Tuple<Long, Long>, Friendship> {
     private Validator<Friendship> validator;
-    private Connection connection;
+    private final Connection connection;
     private Properties props;
 
     public FriendshipDbRepository(Validator<Friendship> validator, Properties props) {
@@ -155,4 +156,131 @@ public class FriendshipDbRepository implements Repository<Tuple<Long, Long>, Fri
             throw new RepoException("Eroare la update friendship", e.getCause());
         }
     }
+
+    private int count(Connection connection) throws SQLException {
+        String sql = "SELECT COUNT(*) AS count FROM friendships";
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet result = statement.executeQuery()) {
+            int totalNumberOfFriends = 0;
+            if (result.next()) {
+                totalNumberOfFriends = result.getInt("count");
+            }
+            return totalNumberOfFriends;
+        }
+    }
+
+    public User fromRowUser(ResultSet row) throws SQLException {
+        User user = new User(row.getString("first_name"), row.getString("last_name"));
+        user.setId(row.getLong("id"));
+        return user;
+    }
+
+    public Page<User> findFriendsOnPage(Long userId, Pageable pageable) {
+        try{
+            int totalNumberOfFriends = count(connection);
+            List<User> friendsOnPage;
+            if(totalNumberOfFriends > 0) {
+                friendsOnPage = findAllOnPageFriends(userId, connection, pageable);
+            }
+            else{
+                friendsOnPage = new ArrayList<>();
+            }
+            return new Page<>(friendsOnPage, totalNumberOfFriends);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public List<User> findAllOnPageFriends(Long userId, Connection connection, Pageable pageable) throws SQLException{
+        List<User> friendsOnPage = new ArrayList<>();
+        String sql = "SELECT u.id, u.first_name, u.last_name FROM friendships f" +
+                " JOIN users u ON u.id = CASE" +
+                " WHEN f.id1 = ? THEN f.id2 ELSE f.id1" +
+                " END " +
+                " WHERE f.id1 = ? OR f.id2 = ?" +
+                " LIMIT ? OFFSET ?";
+        PreparedStatement statement = connection.prepareStatement(sql);
+        statement.setLong(1, userId);
+        statement.setLong(2, userId);
+        statement.setLong(3, userId);
+        statement.setInt(4, pageable.getPageSize());
+        statement.setInt(5, pageable.getPageNumber() * pageable.getPageSize());;
+
+        ResultSet resSet = statement.executeQuery();
+
+        while(resSet.next()) {
+            friendsOnPage.add(fromRowUser(resSet));
+        }
+        return friendsOnPage;
+    }
+
+    //    public List<User> findAllOnPageFr(Connection connection, Pageable pageable) throws SQLException {
+//        List<User> friendsOnPage = new ArrayList<>();
+//        //TODO schimba SQL
+//        String sql = "SELECT DISTINCT u.id, u.first_name, u.last_name" +
+//                " FROM friendships f" +
+//                " INNER JOIN users u ON u.id = f.id1" +
+//                " ORDER BY u.id" +
+//                " LIMIT ? OFFSET ?";
+//        PreparedStatement statement = connection.prepareStatement(sql);
+//        statement.setInt(1, pageable.getPageSize());
+//        statement.setInt(2, pageable.getPageNumber() * pageable.getPageSize());
+//        ResultSet resSet = statement.executeQuery();
+//
+//        while(resSet.next()) {
+//            friendsOnPage.add(fromRowUser(resSet));
+//        }
+//        return friendsOnPage;
+//    }
+
+    //    @Override
+//    public Page<User> findAllOnPage(Pageable pageable) {
+//        try(connection) {
+//            int totalNumberOfFriends = count(connection);
+//            List<User> friendsOnPage = new ArrayList<>();
+//            if(totalNumberOfFriends > 0) {
+//                friendsOnPage = findAllOnPageFr(connection, pageable);
+//            }
+//            else{
+//                friendsOnPage = new ArrayList<>();
+//            }
+//            return new Page<>(friendsOnPage, totalNumberOfFriends);
+//        } catch (SQLException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
+
+    private static final Map<String, String> SORT_COLUMNS = Map.of(
+            "first_name", "prenume",
+            "last_name", "nume"
+    );
+
+//    @Override
+//    public Page<Friendship> findAllOnPage(Pageable pageable, Sort sort) {
+//        String field = sort.field() == null ? "" : sort.field().trim().toLowerCase();
+//        String column = SORT_COLUMNS.get(field);
+//        if(column == null) {
+//            throw new IllegalArgumentException("Cannot sort by: " + sort.field() + ". Allowed: " + SORT_COLUMNS.keySet());
+//        }
+//
+//        String sql = "";
+//        try(connection) {
+//            int totalNumberOfFriends = count(connection);
+//            List<Friendship> friendsOnPage = new ArrayList<>();
+//            try(PreparedStatement statement = connection.prepareStatement(sql)){
+//                statement.setInt(1, pageable.getPageSize());
+//                statement.setInt(2, pageable.getPageNumber() * pageable.getPageSize());
+//                try(ResultSet resSet = statement.executeQuery()) {
+//                    while (resSet.next()) {
+//                        Friendship fr = new Friendship(resSet.getLong("id1"), resSet.getLong("id2"), resSet.getString("friends_from"));
+//                        fr.setId(resSet.getLong("id"));
+//                        friendsOnPage.add(fr);
+//                    }
+//                }
+//            }
+//            return new Page<>(friendsOnPage, totalNumberOfFriends);
+//        } catch (SQLException e) {
+//            throw new RepoException("Sorted pagination failed", e);
+//        }
+//    }
 }

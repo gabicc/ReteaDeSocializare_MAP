@@ -1,5 +1,5 @@
 package social_network.repo.file;
-import social_network.domain.Validator;
+import social_network.domain.validators.Validator;
 import social_network.domain.User;
 
 /**

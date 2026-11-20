@@ -1,9 +1,7 @@
-package social_network.domain;
+package social_network.domain.validators;
 
-import social_network.repo.Network;
+import social_network.domain.Friendship;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 /**
  * ValidatorFriendship class is responsible for validating Friendship entities.
  * It checks if the friendship IDs are not null, if they are not the same, and if the friendship already exists in the network.

@@ -1,14 +1,13 @@
 package social_network.repo;
 
 import social_network.domain.*;
+import social_network.domain.validators.ValidatorFriendship;
+import social_network.domain.validators.ValidatorMessage;
+import social_network.domain.validators.ValidatorUser;
 import social_network.events.*;
 import social_network.exceptions.*;
 import social_network.observable.SocialObservable;
-import social_network.repo.file.FriendshipFileRepository;
-import social_network.repo.file.MessageFileRepository;
-import social_network.repo.file.UserFileRepository;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;

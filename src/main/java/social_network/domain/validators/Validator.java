@@ -1,6 +1,4 @@
-package social_network.domain;
-
-import social_network.repo.Network;
+package social_network.domain.validators;
 
 /*
     * Validator class is an abstract class that defines the validate method for validating entities.
